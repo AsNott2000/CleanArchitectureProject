@@ -10,29 +10,31 @@ public class LoginUserHandler
 {
     private readonly IUsersRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IJwtTokenService _jwt;
 
-    public LoginUserHandler(IUsersRepository userRepository, IPasswordHasher passwordHasher)
+    public LoginUserHandler(IUsersRepository userRepository, IPasswordHasher passwordHasher, IJwtTokenService jwt)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _jwt = jwt;
     }
     
-    public async Task<UserDto> HandleAsync(LoginUserCommand command, CancellationToken ct = default)
+    public async Task<LoginResponseDto> HandleAsync(LoginUserCommand command, CancellationToken ct = default)
     {
-        var user = await _userRepository.GetByIdAsync(command.UserName);
+        var user = await _userRepository.GetByUserNameAsync(command.UserName);
         if (user is null)
             throw new InvalidOperationException("Kullanıcı bulunamadı.");
 
         if (!_passwordHasher.Verify(command.Password, user.Password))
             throw new InvalidOperationException("Şifre hatalı.");
 
-        return new UserDto
+        var token = _jwt.GenerateToken(user.Id, user.UserName);
+        return new LoginResponseDto
         {
             Id = user.Id,
             Name = user.Name,
-            Surname = user.Surname,
             UserName = user.UserName,
-            CarId = user.CarId
+            Token = token
         };
     }
 

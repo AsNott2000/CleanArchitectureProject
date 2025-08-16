@@ -10,7 +10,7 @@ public class UsersRepository : IUsersRepository
 {
     private readonly AppDbContext _context;
     public UsersRepository(AppDbContext context) => _context = context;
-    
+
     public async Task AddAsync(UsersModel users)
     {
         _context.Users.Add(users);
